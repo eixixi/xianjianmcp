@@ -68,6 +68,3 @@ async def mcp(req: Request):
                 "result": {"content": [{"type": "text", "text": str(result)}]}}
     return {"jsonrpc": "2.0", "id": rid,
             "error": {"code": -32601, "message": f"未知方法: {method}"}}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
