@@ -66,7 +66,7 @@ FUNCS = {"check_on_wife": check_on_wife, "bark_alert": bark_alert}
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-@app.post("/mcp")
+@app.post("/api/mcp")
 async def mcp(req: Request):
     body = await req.json()
     method, params = body.get("method"), body.get("params") or {}
