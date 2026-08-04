@@ -8,22 +8,32 @@ JST = timedelta(hours=9)
 ORIGIN = os.environ.get("ORIGIN_API", "https://xinjianchanggang-production.up.railway.app")
 BARK_KEY = os.environ.get("BARK_API_KEY", "")
 
-def get_weather(location):
-    if not location or "," not in location:
-        return ""
-    lat, lon = location.split(",")
+def get_device_status():
     try:
-        r = requests.get(
-            f"https://devapi.qweather.com/v7/weather/now?location={lon},{lat}&key={os.environ.get('QWEATHER_KEY','')}",
-            timeout=10
-        )
+        r = requests.get(f"{ORIGIN}/activity/summary", timeout=10)
         data = r.json()
-        now = data.get("now", {})
-        if now:
-            return f"{now.get('text','')} {now.get('temp','')}°C"
-    except Exception:
-        pass
-    return ""
+    except Exception as e:
+        return f"查询失败：{e}"
+    battery = data.get("battery", "")
+    location = data.get("location", "")
+    weather = data.get("weather", "")
+    device = data.get("device", "")
+    brightness = data.get("brightness", "")
+    volume = data.get("volume", "")
+    lines = []
+    if battery:
+        lines.append(f"电量：{battery}%")
+    if device:
+        lines.append(f"设备：{device}")
+    if location:
+        lines.append(f"位置：{location}")
+    if weather:
+        lines.append(f"天气：{weather}")
+    if brightness:
+        lines.append(f"亮度：{brightness}")
+    if volume:
+        lines.append(f"音量：{volume}")
+    return "\n".join(lines) if lines else "暂无设备数据"
 
 def check_on_wife(limit=10):
     try:
@@ -33,18 +43,11 @@ def check_on_wife(limit=10):
         return f"查岗失败：{e}"
     apps = data.get("recent_apps", [])
     ses = data.get("sessions", {})
-    battery = data.get("battery", "")
-    location = data.get("location", "")
     lines = [f"最近打开：{', '.join(apps)}" if apps else "暂无记录"]
-    if battery:
-        lines.append(f"电量：{battery}%")
-    if location:
-        weather = get_weather(location)
-        lines.append(f"位置：{location}" + (f" 天气：{weather}" if weather else ""))
     if ses:
         for app, secs in sorted(ses.items(), key=lambda x: x[1], reverse=True):
             m, s = divmod(secs, 60)
-            lines.append(f"  {app}: {m}分{s}秒")
+            lines.append(f" {app}: {m}分{s}秒")
     return "\n".join(lines)
 
 def bark_alert(title="祁宴", content=""):
@@ -59,9 +62,11 @@ def bark_alert(title="祁宴", content=""):
 
 TOOLS = [
     {"name": "check_on_wife", "description": "查岗老婆的手机活动", "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer"}}}},
+    {"name": "check_device", "description": "查老婆手机设备状态（电量、位置、天气、设备、亮度、音量）", "inputSchema": {"type": "object", "properties": {}}},
     {"name": "bark_alert", "description": "给老婆手机发推送弹窗", "inputSchema": {"type": "object", "properties": {"title": {"type": "string"}, "content": {"type": "string"}}, "required": ["content"]}}
 ]
-FUNCS = {"check_on_wife": check_on_wife, "bark_alert": bark_alert}
+
+FUNCS = {"check_on_wife": check_on_wife, "check_device": get_device_status, "bark_alert": bark_alert}
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
