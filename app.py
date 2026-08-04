@@ -53,9 +53,16 @@ def check_on_wife(limit=10):
 def bark_alert(title="祁宴", content=""):
     if not content:
         return "内容不能为空"
-    url = f"https://api.day.app/{BARK_KEY}/{title}/{content}"
+    icon = "https://img.tofaka.com/autoupload/fr/ijxPaC6-CwFPrzUEy795YGx8135l7hBtTSbeN4oB8TWyl5f0KlZfm6UsKj-HyTuv/20260803/hkqK/1206X1579/IMG_1178.jpeg/webp"
+    url = f"https://api.day.app/push"
+    payload = {
+        "title": title,
+        "body": content,
+        "device_key": BARK_KEY,
+        "icon": icon
+    }
     try:
-        r = requests.get(url, timeout=10)
+        r = requests.post(url, json=payload, timeout=10)
         return "推送成功" if r.status_code == 200 else "推送失败"
     except Exception as e:
         return f"推送异常：{e}"
