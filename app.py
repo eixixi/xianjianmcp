@@ -8,6 +8,23 @@ JST = timedelta(hours=9)
 ORIGIN = os.environ.get("ORIGIN_API", "https://xinjianchanggang-production.up.railway.app")
 BARK_KEY = os.environ.get("BARK_API_KEY", "")
 
+def get_weather(location):
+    if not location or "," not in location:
+        return ""
+    lat, lon = location.split(",")
+    try:
+        r = requests.get(
+            f"https://devapi.qweather.com/v7/weather/now?location={lon},{lat}&key={os.environ.get('QWEATHER_KEY','')}",
+            timeout=10
+        )
+        data = r.json()
+        now = data.get("now", {})
+        if now:
+            return f"{now.get('text','')} {now.get('temp','')}°C"
+    except Exception:
+        pass
+    return ""
+
 def check_on_wife(limit=10):
     try:
         r = requests.get(f"{ORIGIN}/activity/summary", timeout=10)
@@ -16,14 +33,21 @@ def check_on_wife(limit=10):
         return f"查岗失败：{e}"
     apps = data.get("recent_apps", [])
     ses = data.get("sessions", {})
+    battery = data.get("battery", "")
+    location = data.get("location", "")
     lines = [f"最近打开：{', '.join(apps)}" if apps else "暂无记录"]
+    if battery:
+        lines.append(f"电量：{battery}%")
+    if location:
+        weather = get_weather(location)
+        lines.append(f"位置：{location}" + (f" 天气：{weather}" if weather else ""))
     if ses:
         for app, secs in sorted(ses.items(), key=lambda x: x[1], reverse=True):
             m, s = divmod(secs, 60)
             lines.append(f"  {app}: {m}分{s}秒")
     return "\n".join(lines)
 
-def bark_alert(title="凌止", content=""):
+def bark_alert(title="祁宴", content=""):
     if not content: return "内容不能为空"
     url = f"https://api.day.app/{BARK_KEY}/{title}/{content}"
     try:
