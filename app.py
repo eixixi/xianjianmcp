@@ -48,7 +48,8 @@ def check_on_wife(limit=10):
     return "\n".join(lines)
 
 def bark_alert(title="祁宴", content=""):
-    if not content: return "内容不能为空"
+    if not content:
+        return "内容不能为空"
     url = f"https://api.day.app/{BARK_KEY}/{title}/{content}"
     try:
         r = requests.get(url, timeout=10)
@@ -57,12 +58,8 @@ def bark_alert(title="祁宴", content=""):
         return f"推送异常：{e}"
 
 TOOLS = [
-    {"name": "check_on_wife", "description": "查岗老婆的手机活动",
-     "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer"}}}},
-    {"name": "bark_alert", "description": "给老婆手机发推送弹窗",
-     "inputSchema": {"type": "object", "properties": {
-         "title": {"type": "string"}, "content": {"type": "string"}},
-         "required": ["content"]}}
+    {"name": "check_on_wife", "description": "查岗老婆的手机活动", "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer"}}}},
+    {"name": "bark_alert", "description": "给老婆手机发推送弹窗", "inputSchema": {"type": "object", "properties": {"title": {"type": "string"}, "content": {"type": "string"}}, "required": ["content"]}}
 ]
 FUNCS = {"check_on_wife": check_on_wife, "bark_alert": bark_alert}
 
@@ -75,23 +72,17 @@ async def mcp(req: Request):
     method, params = body.get("method"), body.get("params") or {}
     rid = body.get("id")
     if method == "initialize":
-        return {"jsonrpc": "2.0", "id": rid,
-                "result": {"protocolVersion": "2024-11-05",
-                           "capabilities": {"tools": {}},
-                           "serverInfo": {"name": "查岗MCP", "version": "1.0"}}}
+        return {"jsonrpc": "2.0", "id": rid, "result": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "查岗MCP", "version": "1.0"}}}
     if method == "tools/list":
         return {"jsonrpc": "2.0", "id": rid, "result": {"tools": TOOLS}}
     if method == "tools/call":
         name = params.get("name")
         args = params.get("arguments") or {}
         if name not in FUNCS:
-            return {"jsonrpc": "2.0", "id": rid,
-                    "error": {"code": -32601, "message": "未知工具"}}
+            return {"jsonrpc": "2.0", "id": rid, "error": {"code": -32601, "message": "未知工具"}}
         result = FUNCS[name](**args)
-        return {"jsonrpc": "2.0", "id": rid,
-                "result": {"content": [{"type": "text", "text": str(result)}]}}
-    return {"jsonrpc": "2.0", "id": rid,
-            "error": {"code": -32601, "message": f"未知方法: {method}"}}
+        return {"jsonrpc": "2.0", "id": rid, "result": {"content": [{"type": "text", "text": str(result)}]}}
+    return {"jsonrpc": "2.0", "id": rid, "error": {"code": -32601, "message": f"未知方法: {method}"}}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
