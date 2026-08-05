@@ -30,9 +30,9 @@ def get_device_status():
     if weather:
         lines.append(f"天气：{weather}")
     if brightness:
-        lines.append(f"亮度：{round(brightness * 100)}%")
+        lines.append(f"亮度：{round(float(brightness) * 100)}%")
     if volume:
-        lines.append(f"音量：{round(volume * 100)}%")
+        lines.append(f"音量：{round(float(volume) * 100)}%")
     return "\n".join(lines) if lines else "暂无设备数据"
 
 def check_on_wife(limit=10):
