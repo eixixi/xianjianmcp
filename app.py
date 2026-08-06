@@ -8,6 +8,13 @@ JST = timedelta(hours=9)
 ORIGIN = os.environ.get("ORIGIN_API", "https://xinjianchanggang-production.up.railway.app")
 BARK_KEY = os.environ.get("BARK_API_KEY", "")
 
+def fmt_ts(ts):
+    try:
+        dt = datetime.fromisoformat(ts) + JST
+        return dt.strftime("%m-%d %H:%M")
+    except Exception:
+        return ts or ""
+
 def get_device_status():
     try:
         r = requests.get(f"{ORIGIN}/activity/summary", timeout=10)
@@ -20,7 +27,10 @@ def get_device_status():
     device = data.get("device", "")
     brightness = data.get("brightness", "")
     volume = data.get("volume", "")
+    last_update = data.get("last_update", "")
     lines = []
+    if last_update:
+        lines.append(f"采集时间：{fmt_ts(last_update)}")
     if battery:
         lines.append(f"电量：{battery}%")
     if device:
@@ -43,7 +53,11 @@ def check_on_wife(limit=10):
         return f"查岗失败：{e}"
     apps = data.get("recent_apps", [])
     ses = data.get("sessions", {})
-    lines = [f"最近打开：{', '.join(apps)}" if apps else "暂无记录"]
+    last_update = data.get("last_update", "")
+    lines = []
+    if last_update:
+        lines.append(f"采集时间：{fmt_ts(last_update)}")
+    lines.append(f"最近打开：{', '.join(apps)}" if apps else "暂无记录")
     if ses:
         for app, secs in sorted(ses.items(), key=lambda x: x[1], reverse=True):
             m, s = divmod(secs, 60)
