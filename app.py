@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-JST = timedelta(hours=9)
+JST = timedelta(hours=8)
 ORIGIN = os.environ.get("ORIGIN_API", "https://xinjianchanggang-production.up.railway.app")
 BARK_KEY = os.environ.get("BARK_API_KEY", "")
 
